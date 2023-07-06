@@ -25,8 +25,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build the Docker image
       run:         
-        docker build . --file WebApp.Dockerfile --tag absci-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER;
-        docker tag absci-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER absci-app-aoai-chatgpt:latest;
-        docker push absci-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER;
-        docker push absci-app-aoai-chatgpt:latest;
+        docker build . --file WebApp.Dockerfile --tag asboai.azurecr.io/absci-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER;
+        docker tag asboai.azurecr.io/absci-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER asboai.azurecr.io/absci-app-aoai-chatgpt:latest;
+        docker push asboai.azurecr.io/absci-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER;
+        docker push asboai.azurecr.io/absci-app-aoai-chatgpt:latest;
       
