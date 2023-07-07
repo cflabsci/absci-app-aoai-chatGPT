@@ -36,7 +36,7 @@
 }
 
 .chatEmptyStateTitle {
-    font-family: "Segoe UI";
+    font-family: "SharpMedium", Arial, sans-serif;
     font-style: normal;
     font-weight: 700;
     font-size: 36px;
@@ -50,7 +50,7 @@
 
 .chatEmptyStateSubtitle {
     margin-top: 20px;
-    font-family: "Segoe UI";
+    font-family: "SharpMedium", Arial, sans-serif;
     font-style: normal;
     font-weight: 400;
     font-size: 16px;
