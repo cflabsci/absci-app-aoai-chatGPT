@@ -19,8 +19,8 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk add --no-cache \  
     libpq \  
     && pip install --no-cache-dir uwsgi  
-    && apk add --allow-untrusted msodbcsql18_18.2.2.1-1_amd64.apk
-    && apk add --allow-untrusted mssql-tools18_18.2.1.1-1_amd64.apk
+    apk add --allow-untrusted msodbcsql18_18.2.2.1-1_amd64.apk
+    apk add --allow-untrusted mssql-tools18_18.2.1.1-1_amd64.apk
   
 COPY requirements.txt /usr/src/app/  
 RUN pip install --no-cache-dir -r /usr/src/app/requirements.txt \  
