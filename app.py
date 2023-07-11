@@ -1,10 +1,12 @@
 import json
 import os
+import pyodbc
 import logging
 import requests
 import openai
 from flask import Flask, Response, request, jsonify
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -41,7 +43,18 @@ AZURE_OPENAI_PREVIEW_API_VERSION = os.environ.get("AZURE_OPENAI_PREVIEW_API_VERS
 AZURE_OPENAI_STREAM = os.environ.get("AZURE_OPENAI_STREAM", "true")
 AZURE_OPENAI_MODEL_NAME = os.environ.get("AZURE_OPENAI_MODEL_NAME", "gpt-35-turbo") # Name of the model, e.g. 'gpt-35-turbo' or 'gpt-4'
 
+#Azure SQL Database connection
+AZURE_DB_SERVER = os.environ.get("AZURE_DB_SERVER")
+AZURE_DB_NAME = os.environ.get("AZURE_DB_NAME")
+AZURE_DB_USERNAME = os.environ.get("AZURE_DB_USERNAME")
+AZURE_DB_PASSWORD = os.environ.get("AZURE_DB_PASSWORD")
+AZURE_DB_DRIVER = '{ODBC Driver 18 for SQL Server}'
+
 SHOULD_STREAM = True if AZURE_OPENAI_STREAM.lower() == "true" else False
+
+# Create a connection to the SQL database
+conn = pyodbc.connect('DRIVER='+AZURE_DB_DRIVER+';SERVER=tcp:'+AZURE_DB_SERVER+';PORT=1433;DATABASE='+AZURE_DB_NAME+';UID='+AZURE_DB_USERNAME+';PWD='+ AZURE_DB_PASSWORD)
+c = conn.cursor()
 
 def is_chat_model():
     if 'gpt-4' in AZURE_OPENAI_MODEL_NAME.lower() or AZURE_OPENAI_MODEL_NAME.lower() in ['gpt-35-turbo-4k', 'gpt-35-turbo-16k']:
@@ -138,8 +151,9 @@ def stream_with_data(body, headers, endpoint):
                         deltaText = lineJson["choices"][0]["messages"][0]["delta"]["content"]
                         if deltaText != "[DONE]":
                             response["choices"][0]["messages"][1]["content"] += deltaText
-
+            
                     yield json.dumps(response).replace("\n", "\\n") + "\n"
+    
     except Exception as e:
         yield json.dumps({"error": str(e)}).replace("\n", "\\n") + "\n"
 
@@ -159,8 +173,9 @@ def conversation_with_data(request):
             return Response(stream_with_data(body, headers, endpoint), mimetype='text/event-stream')
         else:
             return Response(None, mimetype='text/event-stream')
+        
 
-def stream_without_data(response):
+""" def stream_without_data(response):
     responseText = ""
     for line in response:
         deltaText = line["choices"][0]["delta"].get('content')
@@ -179,8 +194,8 @@ def stream_without_data(response):
                 }]
             }]
         }
-        yield json.dumps(response_obj).replace("\n", "\\n") + "\n"
 
+        yield json.dumps(response_obj).replace("\n", "\\n") + "\n" """
 
 def conversation_without_data(request):
     openai.api_type = "azure"
@@ -225,18 +240,24 @@ def conversation_without_data(request):
                 }]
             }]
         }
-
         return jsonify(response_obj), 200
     else:
         if request.method == "POST":
-            return Response(stream_without_data(response), mimetype='text/event-stream')
+            return log_chat_completion(request, response)
+            #return Response(stream_without_data(response), mimetype='text/event-stream')
         else:
             return Response(None, mimetype='text/event-stream')
-
+    
 @app.route("/conversation", methods=["GET", "POST"])
 def conversation():
     try:
         use_data = should_use_data()
+        """ip_address = request.remote_addr
+        user_input = str(request.json["messages"])
+        bot_response = str(request.get('content', ''))
+        log_record = f'IP Address: {ip_address}, User input: {user_input}, Bot response: {bot_response}'
+        c.execute("INSERT INTO chat_log (timestamp, ip_address, user_input, bot_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, user_input, bot_response))
+        conn.commit() """
         if use_data:
             return conversation_with_data(request)
         else:
@@ -244,6 +265,42 @@ def conversation():
     except Exception as e:
         logging.exception("Exception in /conversation")
         return jsonify({"error": str(e)}), 500
+
+def log_chat_completion(request, response):
+
+    responseText = ""
+    for line in response:
+        deltaText = line["choices"][0]["delta"].get('content')
+        if deltaText and deltaText != "[DONE]":
+            responseText += deltaText
+
+        response_obj = {
+            "id": line["id"],
+            "model": line["model"],
+            "created": line["created"],
+            "object": line["object"],
+            "choices": [{
+                "messages": [{
+                    "role": "assistant",
+                    "content": responseText
+                }]
+            }]
+        }
+    # Get the client source IP address
+    ip_address = request.remote_addr
+    
+    # Get the chat completion data from the request
+    msg_log = str(request.json["messages"])
+    #bot_response = str(stream_without_data(response))
+    last_response = str(responseText)
+    # Create a log record with the chat completion data and IP address
+    #log_record = f'IP Address: {ip_address}, User input: {user_input}, Bot response: {bot_response}'
+    
+    # Log the chat completion data to the SQL database
+    c.execute("INSERT INTO chat_log (timestamp, ip_address, msg_log, last_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, msg_log, last_response))
+    conn.commit()
+    
+    return Response(((json.dumps(response_obj).replace("\n", "\\n") + "\n")), mimetype='text/event-stream')
 
 if __name__ == "__main__":
     app.run()
