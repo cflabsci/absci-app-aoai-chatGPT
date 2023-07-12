@@ -243,8 +243,8 @@ def conversation_without_data(request):
         return jsonify(response_obj), 200
     else:
         if request.method == "POST":
-            #return log_chat_completion(request, response)
-            return Response(stream_without_data(response), mimetype='text/event-stream')
+            return log_chat_completion(request, response)
+            #return Response(stream_without_data(response), mimetype='text/event-stream')
         else:
             return Response(None, mimetype='text/event-stream')
     
@@ -266,7 +266,7 @@ def conversation():
         logging.exception("Exception in /conversation")
         return jsonify({"error": str(e)}), 500
 
-""" def log_chat_completion(request, response):
+def log_chat_completion(request, response):
 
     responseText = ""
     for line in response:
@@ -300,7 +300,7 @@ def conversation():
     c.execute("INSERT INTO chat_log (timestamp, ip_address, msg_log, last_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, msg_log, last_response))
     conn.commit()
     
-    return Response(((json.dumps(response_obj).replace("\n", "\\n") + "\n")), mimetype='text/event-stream') """
+    return Response(((json.dumps(response_obj).replace("\n", "\\n") + "\n")), mimetype='text/event-stream')
 
 if __name__ == "__main__":
     app.run()
