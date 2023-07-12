@@ -53,8 +53,8 @@ AZURE_DB_DRIVER = '{ODBC Driver 18 for SQL Server}'
 SHOULD_STREAM = True if AZURE_OPENAI_STREAM.lower() == "true" else False
 
 # Create a connection to the SQL database
-#conn = pyodbc.connect('DRIVER='+AZURE_DB_DRIVER+';SERVER=tcp:'+AZURE_DB_SERVER+';PORT=1433;DATABASE='+AZURE_DB_NAME+';UID='+AZURE_DB_USERNAME+';PWD='+ AZURE_DB_PASSWORD)
-#c = conn.cursor()
+conn = pyodbc.connect('DRIVER='+AZURE_DB_DRIVER+';SERVER=tcp:'+AZURE_DB_SERVER+';PORT=1433;DATABASE='+AZURE_DB_NAME+';UID='+AZURE_DB_USERNAME+';PWD='+ AZURE_DB_PASSWORD)
+c = conn.cursor()
 
 def is_chat_model():
     if 'gpt-4' in AZURE_OPENAI_MODEL_NAME.lower() or AZURE_OPENAI_MODEL_NAME.lower() in ['gpt-35-turbo-4k', 'gpt-35-turbo-16k']:
