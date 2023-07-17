@@ -52,9 +52,10 @@ AZURE_DB_DRIVER = '{ODBC Driver 18 for SQL Server}'
 
 SHOULD_STREAM = True if AZURE_OPENAI_STREAM.lower() == "true" else False
 
-# Create a connection to the SQL database
-conn = pyodbc.connect('DRIVER='+AZURE_DB_DRIVER+';SERVER=tcp:'+AZURE_DB_SERVER+';PORT=1433;DATABASE='+AZURE_DB_NAME+';UID='+AZURE_DB_USERNAME+';PWD='+ AZURE_DB_PASSWORD)
-c = conn.cursor()
+def sql_connection():
+    conn = pyodbc.connect('DRIVER='+AZURE_DB_DRIVER+';SERVER=tcp:'+AZURE_DB_SERVER+';PORT=1433;DATABASE='+AZURE_DB_NAME+';UID='+AZURE_DB_USERNAME+';PWD='+ AZURE_DB_PASSWORD)
+    c = conn.cursor()
+    return conn, c
 
 def is_chat_model():
     if 'gpt-4' in AZURE_OPENAI_MODEL_NAME.lower() or AZURE_OPENAI_MODEL_NAME.lower() in ['gpt-35-turbo-4k', 'gpt-35-turbo-16k']:
@@ -194,7 +195,6 @@ def stream_without_data(response):
                 }]
             }]
         }
-
         yield json.dumps(response_obj).replace("\n", "\\n") + "\n"
 
 def conversation_without_data(request):
@@ -267,7 +267,6 @@ def conversation():
         return jsonify({"error": str(e)}), 500
 
 def log_chat_completion(request, response):
-
     responseText = ""
     for line in response:
         deltaText = line["choices"][0]["delta"].get('content')
@@ -285,7 +284,7 @@ def log_chat_completion(request, response):
                     "content": responseText
                 }]
             }]
-        }
+        } 
     # Get the client source IP address
     ip_address = request.remote_addr
     
@@ -297,8 +296,9 @@ def log_chat_completion(request, response):
     #log_record = f'IP Address: {ip_address}, User input: {user_input}, Bot response: {bot_response}'
     
     # Log the chat completion data to the SQL database
-    c.execute("INSERT INTO chat_log (timestamp, ip_address, msg_log, last_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, msg_log, last_response))
-    conn.commit()
+    conn, c = sql_connection()
+    conn.execute("INSERT INTO chat_log (timestamp, ip_address, msg_log, last_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, msg_log, last_response))
+    c.commit()
     
     return Response(((json.dumps(response_obj).replace("\n", "\\n") + "\n")), mimetype='text/event-stream')
 
