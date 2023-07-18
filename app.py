@@ -53,9 +53,7 @@ AZURE_DB_DRIVER = '{ODBC Driver 18 for SQL Server}'
 SHOULD_STREAM = True if AZURE_OPENAI_STREAM.lower() == "true" else False
 
 def sql_connection():
-    conn = pyodbc.connect('DRIVER='+AZURE_DB_DRIVER+';SERVER=tcp:'+AZURE_DB_SERVER+';PORT=1433;DATABASE='+AZURE_DB_NAME+';UID='+AZURE_DB_USERNAME+';PWD='+ AZURE_DB_PASSWORD)
-    c = conn.cursor()
-    return conn, c
+    return pyodbc.connect('DRIVER='+AZURE_DB_DRIVER+';SERVER=tcp:'+AZURE_DB_SERVER+';PORT=1433;DATABASE='+AZURE_DB_NAME+';UID='+AZURE_DB_USERNAME+';PWD='+ AZURE_DB_PASSWORD, timeout=60)
 
 def is_chat_model():
     if 'gpt-4' in AZURE_OPENAI_MODEL_NAME.lower() or AZURE_OPENAI_MODEL_NAME.lower() in ['gpt-35-turbo-4k', 'gpt-35-turbo-16k']:
@@ -296,7 +294,8 @@ def log_chat_completion(request, response):
     #log_record = f'IP Address: {ip_address}, User input: {user_input}, Bot response: {bot_response}'
     
     # Log the chat completion data to the SQL database
-    conn, c = sql_connection()
+    conn = sql_connection()
+    c = conn.cursor()
     conn.execute("INSERT INTO chat_log (timestamp, ip_address, msg_log, last_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, msg_log, last_response))
     c.commit()
     
