@@ -45,13 +45,13 @@
     font-family: "Arial";
     font-style: normal;
     font-weight: 400;
-    font-size: 12px;
+    font-size: 10px;
     line-height: 16px;
 
     display: flex;
     align-items: center;
     text-align: center;
-    color: #000000;
+    color: #727272;
     flex: none;
     order: 1;
     flex-grow: 0;

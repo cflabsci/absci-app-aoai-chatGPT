@@ -250,12 +250,6 @@ def conversation_without_data(request):
 def conversation():
     try:
         use_data = should_use_data()
-        """ip_address = request.remote_addr
-        user_input = str(request.json["messages"])
-        bot_response = str(request.get('content', ''))
-        log_record = f'IP Address: {ip_address}, User input: {user_input}, Bot response: {bot_response}'
-        c.execute("INSERT INTO chat_log (timestamp, ip_address, user_input, bot_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, user_input, bot_response))
-        conn.commit() """
         if use_data:
             return conversation_with_data(request)
         else:
@@ -293,7 +287,7 @@ def log_chat_completion(request, response):
     # Create a log record with the chat completion data and IP address
     #log_record = f'IP Address: {ip_address}, User input: {user_input}, Bot response: {bot_response}'
     
-    # Log the chat completion data to the SQL database
+    ## Log the chat completion data to the SQL database
     conn = sql_connection()
     c = conn.cursor()
     conn.execute("INSERT INTO chat_log (timestamp, ip_address, msg_log, last_response) VALUES (?, ?, ?, ?)", (datetime.now(), ip_address, msg_log, last_response))
